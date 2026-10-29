@@ -1,0 +1,2 @@
+# Use -1 for all files
+n_files_max_per_sample: 1
