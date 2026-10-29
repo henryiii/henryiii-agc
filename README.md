@@ -23,10 +23,15 @@ uv run file_input.py --sample ttbar__nominal --urls  # pelican:// URLs
 The workflow uses [Snakemake](https://snakemake.readthedocs.io). Outputs go to
 `results/`. Set the number of files per sample in `config.yaml` (`-1` for all).
 
-The workflow fills the nominal `4j1b` (HT) and `4j2b` (trijet mass)
-histograms for each sample, merges them into `results/histograms.root` with
-pseudodata, and compares them with the AGC reference in `reference/`. The
-result of the comparison is in `results/validation.txt`.
+The workflow fills the `4j1b` (HT) and `4j2b` (trijet mass) histograms for
+each sample, merges them into `results/histograms.root` with pseudodata, and
+compares them with the AGC reference in `reference/`. The result of the
+comparison is in `results/validation.txt`.
+
+The nominal samples also get the systematic variations: jet pT scale
+(`pt_scale_up`) and resolution (`pt_res_up`), b-tag weights
+(`btag_var_{0..3}_{up,down}`), and W+jets scale (`scale_var_{up,down}`).
+`pt_res_up` uses random smearing, so validation checks only its edges.
 
 Use at most 2 jobs. With more, the OSDF caches can drop connections.
 

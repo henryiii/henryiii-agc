@@ -15,6 +15,9 @@ STEP_SIZE = 500_000
 LUMI = 3378  # /pb
 B_TAG_THRESHOLD = 0.5
 REGIONS = ("4j1b", "4j2b")
+N_BTAG_VARS = 4
+# Seed for the pt_res_up smearing (the AGC does not seed it)
+SEED = 42
 
 BRANCHES = [
     "Electron_pt",
@@ -35,20 +38,27 @@ BRANCHES = [
 ]
 
 
-def make_histograms() -> dict[str, hist.Hist]:
-    return {
-        region: hist.Hist.new.Reg(
-            25, 50, 550, name="observable", label="observable [GeV]"
-        ).Weight()
-        for region in REGIONS
-    }
+def make_histogram() -> hist.Hist:
+    return hist.Hist.new.Reg(
+        25, 50, 550, name="observable", label="observable [GeV]"
+    ).Weight()
 
 
-def observables(events: ak.Array) -> dict[str, ak.Array]:
+def jet_pt_resolution(pt: ak.Array, rng: np.random.Generator) -> ak.Array:
+    """Random 5% jet pT smearing factors, with the same shape as pt."""
+    counts = ak.num(pt)
+    return ak.unflatten(rng.normal(1.0, 0.05, size=int(ak.sum(counts))), counts)
+
+
+def observables(
+    events: ak.Array, jet_pt_factor: float | ak.Array = 1.0
+) -> dict[str, tuple[ak.Array, ak.Array]]:
     """
     Select events and compute the observable for each region: HT in 4j1b, and
-    the trijet mass in 4j2b.
+    the trijet mass in 4j2b. Also return the selected jets for each region.
     """
+    jet_pt = events.Jet_pt * jet_pt_factor
+
     electron_reqs = (
         (events.Electron_pt > 30)
         & (np.abs(events.Electron_eta) < 2.1)
@@ -64,14 +74,12 @@ def observables(events: ak.Array) -> dict[str, ak.Array]:
     )
     # Bit 2 of jetId is tight lepton veto (coffea's Jet.isTightLeptonVeto)
     jet_reqs = (
-        (events.Jet_pt > 30)
-        & (np.abs(events.Jet_eta) < 2.4)
-        & ((events.Jet_jetId & 4) != 0)
+        (jet_pt > 30) & (np.abs(events.Jet_eta) < 2.4) & ((events.Jet_jetId & 4) != 0)
     )
 
     jets = ak.zip(
         {
-            "pt": events.Jet_pt,
+            "pt": jet_pt,
             "eta": events.Jet_eta,
             "phi": events.Jet_phi,
             "mass": events.Jet_mass,
@@ -95,21 +103,55 @@ def observables(events: ak.Array) -> dict[str, ak.Array]:
     p4 = p4[max_btag > B_TAG_THRESHOLD]
     trijet_mass = ak.flatten(p4[ak.argmax(p4.pt, axis=1, keepdims=True)].mass)
 
-    return {"4j1b": ht, "4j2b": trijet_mass}
+    return {"4j1b": (ht, jets_4j1b), "4j2b": (trijet_mass, jets_4j2b)}
 
 
-def fill_histograms(files: list[str], xsec_weight: float) -> dict[str, hist.Hist]:
-    hists = make_histograms()
+def weight_variations(process: str, jets: ak.Array) -> dict[str, ak.Array]:
+    """Event weight factors for each up/down variation."""
+    variations = {}
+    for i in range(N_BTAG_VARS):
+        shift = jets.pt[:, i] * 0.075 / 50
+        variations[f"btag_var_{i}_up"] = 1 + shift
+        variations[f"btag_var_{i}_down"] = 1 - shift
+    if process == "wjets":
+        ones = np.ones(len(jets))
+        variations["scale_var_up"] = 1.025 * ones
+        variations["scale_var_down"] = 0.975 * ones
+    return variations
+
+
+def fill_histograms(
+    files: list[str], process: str, xsec_weight: float, systematics: bool
+) -> dict[str, hist.Hist]:
+    """
+    Fill histograms keyed by "{region}" for the nominal selection and
+    "{region}_{variation}" for the systematic variations.
+    """
+    hists: dict[str, hist.Hist] = {}
+    rng = np.random.default_rng(SEED)
+
+    def fill(name: str, observable: ak.Array, weight: float | ak.Array) -> None:
+        h = hists.setdefault(name, make_histogram())
+        h.fill(observable=observable, weight=np.broadcast_to(weight, len(observable)))
+
     # A memory-size step_size reads every basket key one at a time, which is
     # very slow over high-latency remote access (scikit-hep/uproot5#1797).
     for events in uproot.iterate(
         {f: "Events" for f in files}, BRANCHES, step_size=STEP_SIZE
     ):
-        for region, observable in observables(events).items():
-            hists[region].fill(
-                observable=observable,
-                weight=np.full(len(observable), xsec_weight),
-            )
+        for region, (observable, jets) in observables(events).items():
+            fill(region, observable, xsec_weight)
+            if systematics:
+                for var, factor in weight_variations(process, jets).items():
+                    fill(f"{region}_{var}", observable, xsec_weight * factor)
+        if systematics:
+            pt_variations = {
+                "pt_scale_up": 1.03,
+                "pt_res_up": jet_pt_resolution(events.Jet_pt, rng),
+            }
+            for var, factor in pt_variations.items():
+                for region, (observable, _) in observables(events, factor).items():
+                    fill(f"{region}_{var}", observable, xsec_weight)
     return hists
 
 
@@ -122,14 +164,18 @@ def main() -> None:
 
     sample = construct_fileset(args.n_files)[args.sample]
     metadata = sample["metadata"]
+    process, variation = metadata["process"], metadata["variation"]
     xsec_weight = metadata["xsec"] * LUMI / metadata["nevts"]
-    hists = fill_histograms(sample["files"], xsec_weight)
+    nominal = variation == "nominal"
+    hists = fill_histograms(sample["files"], process, xsec_weight, nominal)
 
-    suffix = "" if metadata["variation"] == "nominal" else f"_{metadata['variation']}"
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with uproot.recreate(args.output) as f:
-        for region, h in hists.items():
-            f[f"{region}_{metadata['process']}{suffix}"] = h
+        for key, h in hists.items():
+            region, _, var = key.partition("_")
+            if not nominal:
+                var = variation
+            f["_".join(filter(None, (region, process, var)))] = h
 
 
 if __name__ == "__main__":

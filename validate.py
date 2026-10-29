@@ -32,12 +32,18 @@ def main() -> None:
             if not np.allclose(edges, ref["edges"]):
                 print(f"{name}: edges do not match")
                 failed = True
+            elif "pt_res_up" in name:
+                # Random smearing; the AGC does not check the contents either
+                print(f"{name}: OK (edges only)")
             elif not np.allclose(contents, ref["contents"]):
                 diff = np.abs(contents - ref["contents"]).max()
                 print(f"{name}: contents do not match (max diff {diff:.4g})")
                 failed = True
             else:
                 print(f"{name}: OK")
+        for name in sorted(reference.keys() - set(names)):
+            print(f"{name}: missing")
+            failed = True
 
     if failed:
         sys.exit(1)
