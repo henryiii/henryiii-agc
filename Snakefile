@@ -4,11 +4,13 @@ configfile: "config.yaml"
 
 N_FILES = config["n_files_max_per_sample"]
 SAMPLES = list(construct_fileset(N_FILES))
+REFERENCE = f"reference/histos_{'all' if N_FILES == -1 else N_FILES}_file_per_process.json"
 
 
 rule all:
     input:
-        expand("results/histograms/{sample}.root", sample=SAMPLES),
+        "results/histograms.root",
+        "results/validation.txt",
 
 
 rule histogram:
@@ -20,5 +22,28 @@ rule histogram:
         "results/histograms/{sample}.root",
     params:
         n_files=N_FILES,
+    # pelicanfs does not retry dropped connections
+    retries: 3
     shell:
         "python {input.script} {wildcards.sample} {output} --n-files {params.n_files}"
+
+
+rule merge:
+    input:
+        hists=expand("results/histograms/{sample}.root", sample=SAMPLES),
+        script="merge.py",
+    output:
+        "results/histograms.root",
+    shell:
+        "python {input.script} {output} {input.hists}"
+
+
+rule validate:
+    input:
+        hists="results/histograms.root",
+        reference=REFERENCE,
+        script="validate.py",
+    output:
+        "results/validation.txt",
+    shell:
+        "python {input.script} {input.hists} {input.reference} | tee {output}"

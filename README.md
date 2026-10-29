@@ -23,10 +23,17 @@ uv run file_input.py --sample ttbar__nominal --urls  # pelican:// URLs
 The workflow uses [Snakemake](https://snakemake.readthedocs.io). Outputs go to
 `results/`. Set the number of files per sample in `config.yaml` (`-1` for all).
 
+The workflow fills the nominal `4j1b` (HT) and `4j2b` (trijet mass)
+histograms for each sample, merges them into `results/histograms.root` with
+pseudodata, and compares them with the AGC reference in `reference/`. The
+result of the comparison is in `results/validation.txt`.
+
+Use at most 2 jobs. With more, the OSDF caches can drop connections.
+
 ```bash
 uv run snakemake -n                # dry run: show the jobs to run
-uv run snakemake -c4               # run with 4 cores
-uv run snakemake -c4 --config n_files_max_per_sample=-1  # all files
+uv run snakemake -c2               # run 2 jobs at a time
+uv run snakemake -c2 --config n_files_max_per_sample=-1  # all files
 uv run snakemake --summary         # status of each output file
 ```
 

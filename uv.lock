@@ -1170,6 +1170,7 @@ dependencies = [
     { name = "pelicanfs" },
     { name = "snakemake" },
     { name = "uproot" },
+    { name = "vector" },
 ]
 
 [package.metadata]
@@ -1178,6 +1179,7 @@ requires-dist = [
     { name = "pelicanfs", specifier = ">=1.5.0" },
     { name = "snakemake", specifier = ">=9.27.1" },
     { name = "uproot", specifier = ">=5.7.7" },
+    { name = "vector", specifier = ">=1.9.0" },
 ]
 
 [[package]]
@@ -2907,6 +2909,20 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/e3/05/b17359e1cefb4f909b5e40b1b90a496d987258916dbbf88e842c729f510e/urllib3-2.8.0.tar.gz", hash = "sha256:63bf2ead4c879426ebf22ef2a781eeb4aa3b4ae798a0435506f8687fd5bb9b63", size = 458972, upload-time = "2026-09-15T19:29:36.253Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/92/9d/c4e665119135114480843e7ab388fa94d8480650450e6f8e26b70d323a4c/urllib3-2.8.0-py3-none-any.whl", hash = "sha256:0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3", size = 135717, upload-time = "2026-09-15T19:29:34.577Z" },
+]
+
+[[package]]
+name = "vector"
+version = "1.9.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "packaging" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b2/cb/bde1d1d07e1ce3188e10a52f4bde53b30625db7c0c9ea2d90fd29039cf70/vector-1.9.0.tar.gz", hash = "sha256:72128b48b6a72af965babd63dccc5a110f0729e6404dcd8c5c75eaac31b80d84", size = 418311, upload-time = "2026-09-20T12:16:30.037Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5a/f9/4dd5d879f9e9528cbf69182d2ec1800b1036860519344c22bc1682cfe77f/vector-1.9.0-py3-none-any.whl", hash = "sha256:791f882db0dbc6738127c67cbd8c1a0ba6e63e40121dba7f69cc5c98327e9f13", size = 187409, upload-time = "2026-09-20T12:16:28.337Z" },
 ]
 
 [[package]]
