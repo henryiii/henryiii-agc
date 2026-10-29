@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "cabinetry[contrib]>=0.6.0",
     "hist>=2.12.1",
     "pelicanfs>=1.5.0",
     "snakemake>=9.27.1",

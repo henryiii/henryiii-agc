@@ -11,6 +11,7 @@ rule all:
     input:
         "results/histograms.root",
         "results/validation.txt",
+        "results/fit.txt",
 
 
 rule histogram:
@@ -47,3 +48,17 @@ rule validate:
         "results/validation.txt",
     shell:
         "python {input.script} {input.hists} {input.reference} | tee {output}"
+
+
+rule fit:
+    input:
+        "results/histograms.root",
+        config="cabinetry_config.yml",
+        script="fit.py",
+    output:
+        workspace="results/workspace.json",
+        figures=directory("results/figures"),
+        result="results/fit.txt",
+    shell:
+        "python {input.script} {input.config} {output.workspace} {output.figures}"
+        " | tee {output.result}"

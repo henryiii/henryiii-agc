@@ -33,6 +33,13 @@ The nominal samples also get the systematic variations: jet pT scale
 (`btag_var_{0..3}_{up,down}`), and W+jets scale (`scale_var_{up,down}`).
 `pt_res_up` uses random smearing, so validation checks only its edges.
 
+Last, the workflow fits the `ttbar_norm` signal strength to the pseudodata
+with [cabinetry](https://cabinetry.readthedocs.io), using
+`cabinetry_config.yml` from the AGC. The fit starts at 110 GeV and uses 40 GeV
+bins. The outputs are the pyhf workspace (`results/workspace.json`), the fit
+result (`results/fit.txt`), and the pre-fit, post-fit and pull plots
+(`results/figures/`).
+
 Use at most 2 jobs. With more, the OSDF caches can drop connections.
 
 ```bash
