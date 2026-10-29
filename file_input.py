@@ -1,3 +1,4 @@
+import argparse
 import json
 from pathlib import Path
 
@@ -45,3 +46,26 @@ def construct_fileset(n_files_max_per_sample: int = -1) -> dict[str, dict]:
             fileset[f"{process}__{variation}"] = {"files": files, "metadata": metadata}
 
     return fileset
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="List the input files")
+    parser.add_argument("--n-files", type=int, default=-1, help="Files per sample")
+    parser.add_argument("--sample", help="Only this sample, like ttbar__nominal")
+    parser.add_argument("--urls", action="store_true", help="Print each file URL")
+    args = parser.parse_args()
+
+    fileset = construct_fileset(args.n_files)
+    if args.sample:
+        fileset = {args.sample: fileset[args.sample]}
+
+    for name, sample in fileset.items():
+        if args.urls:
+            print(*sample["files"], sep="\n")
+        else:
+            nevts = sample["metadata"]["nevts"]
+            print(f"{name:28} {len(sample['files']):4} files {nevts:12,} events")
+
+
+if __name__ == "__main__":
+    main()
