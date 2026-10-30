@@ -7,7 +7,7 @@ import numpy as np
 import uproot
 import vector
 
-from file_input import construct_fileset
+from agc.file_input import construct_fileset
 
 vector.register_awkward()
 

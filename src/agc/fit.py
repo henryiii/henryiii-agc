@@ -61,9 +61,7 @@ def main() -> None:
         )
 
     i = model.config.poi_index
-    print(
-        f"{POI}: {fit_results.bestfit[i]:.3f} +/- {fit_results.uncertainty[i]:.3f}"
-    )
+    print(f"{POI}: {fit_results.bestfit[i]:.3f} +/- {fit_results.uncertainty[i]:.3f}")
 
 
 if __name__ == "__main__":

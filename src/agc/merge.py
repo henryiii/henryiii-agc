@@ -3,7 +3,7 @@ from pathlib import Path
 
 import uproot
 
-from histogram import REGIONS
+from agc.histogram import REGIONS
 
 
 def main() -> None:

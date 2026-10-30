@@ -1,17 +1,26 @@
 [project]
 name = "henryiii-agc"
 version = "0.1.0"
-description = "Add your description here"
+description = "A port of the AGC CMS open data ttbar analysis"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "awkward>=2",
     "cabinetry[contrib]>=0.6.0",
     "hist>=2.12.1",
+    "numpy",
     "pelicanfs>=1.5.0",
     "snakemake>=9.27.1",
     "uproot>=5.7.7",
     "vector>=1.9.0",
 ]
+
+[build-system]
+requires = ["uv_build>=0.13,<0.14"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "agc"
 
 [tool.ruff]
 show-fixes = true

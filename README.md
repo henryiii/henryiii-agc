@@ -6,22 +6,30 @@ analysis](https://github.com/iris-hep/analysis-grand-challenge/tree/main/analyse
 The input NanoAOD files are read remotely from the CERN open data copy on the
 OSDF, `pelican://osg-htc.org/cern-opendata/upload/agc/1.0.0`, with
 [pelicanfs](https://github.com/PelicanPlatform/pelicanfs) and uproot. Nothing
-is downloaded up front. `nanoaod_inputs.json` (from the AGC) lists the files.
+is downloaded up front. `src/agc/nanoaod_inputs.json` (from the AGC) lists the
+files.
+
+## Layout
+
+- `src/agc/`: the analysis code. Run each module with `uv run python -m agc.<name>`.
+- `config/`: the workflow config and the cabinetry fit config.
+- `reference/`: the AGC reference histograms for validation.
+- `Snakefile`: the workflow. Outputs go to `results/`.
 
 ## List the input files
 
 These commands only read `nanoaod_inputs.json`; they do not access the files.
 
 ```bash
-uv run file_input.py                          # samples, file and event counts
-uv run file_input.py --n-files 1              # same, limited to 1 file per sample
-uv run file_input.py --sample ttbar__nominal --urls  # pelican:// URLs
+uv run python -m agc.file_input              # samples, file and event counts
+uv run python -m agc.file_input --n-files 1  # same, limited to 1 file per sample
+uv run python -m agc.file_input --sample ttbar__nominal --urls  # pelican:// URLs
 ```
 
 ## Run the workflow
 
-The workflow uses [Snakemake](https://snakemake.readthedocs.io). Outputs go to
-`results/`. Set the number of files per sample in `config.yaml` (`-1` for all).
+The workflow uses [Snakemake](https://snakemake.readthedocs.io). Set the number of
+files per sample in `config/config.yaml` (`-1` for all).
 
 The workflow fills the `4j1b` (HT) and `4j2b` (trijet mass) histograms for
 each sample, merges them into `results/histograms.root` with pseudodata, and
@@ -35,7 +43,7 @@ The nominal samples also get the systematic variations: jet pT scale
 
 Last, the workflow fits the `ttbar_norm` signal strength to the pseudodata
 with [cabinetry](https://cabinetry.readthedocs.io), using
-`cabinetry_config.yml` from the AGC. The fit starts at 110 GeV and uses 40 GeV
+`config/cabinetry.yml` from the AGC. The fit starts at 110 GeV and uses 40 GeV
 bins. The outputs are the pyhf workspace (`results/workspace.json`), the fit
 result (`results/fit.txt`), and the pre-fit, post-fit and pull plots
 (`results/figures/`).
@@ -52,11 +60,8 @@ uv run snakemake --summary         # status of each output file
 To fill one sample without Snakemake:
 
 ```bash
-uv run histogram.py ttbar__nominal results/histograms/ttbar__nominal.root --n-files 1
+uv run python -m agc.histogram ttbar__nominal results/histograms/ttbar__nominal.root --n-files 1
 ```
-
-`uv run main.py` is a quick check that remote access works. It reads `Jet_pt`
-from one file.
 
 ## Development
 

@@ -1451,10 +1451,13 @@ wheels = [
 [[package]]
 name = "henryiii-agc"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
+    { name = "awkward" },
     { name = "cabinetry", extra = ["contrib"] },
     { name = "hist" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "pelicanfs" },
     { name = "snakemake" },
     { name = "uproot" },
@@ -1463,8 +1466,10 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "awkward", specifier = ">=2" },
     { name = "cabinetry", extras = ["contrib"], specifier = ">=0.6.0" },
     { name = "hist", specifier = ">=2.12.1" },
+    { name = "numpy" },
     { name = "pelicanfs", specifier = ">=1.5.0" },
     { name = "snakemake", specifier = ">=9.27.1" },
     { name = "uproot", specifier = ">=5.7.7" },
